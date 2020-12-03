@@ -1,4 +1,3 @@
-.libPaths("C:/Program Files (x86)/R/win-library/3.5")
 library(RColorBrewer)
 library(gplots)
 library(gdata)
@@ -11,18 +10,14 @@ library("wesanderson")
 library(tidyverse)
 library(pheatmap)
 
-setwd("d:/Post-doc/Project_TomatoPepper_Ryan/Tomato Pepper Data/MSE")
-setwd("c:/Users/lisav/Downloads")
-
-data = read.xlsx("FPKM_average_nomalized_lowlyexpressedremoved.xlsx", colNames = TRUE, rowNames = TRUE)
+#very lowly expressed genes need to be removed
+data = read.xlsx("FPKM_average.xlsx", colNames = TRUE, rowNames = TRUE)
 head(data)
 
 data_zero = data
 data_zero[data_zero == 0] <- .000001
 P = data_zero / rowSums(data_zero) # P is the relative expression of each gene in each timepoint
 H = rowSums(-P * log2(P))
-
-#data.max = apply(data_zero, 1, FUN = max)
 
 hist(H)
 Th = max(H)*0.7 #30% entropy is allowed to be considered an outlier
@@ -74,33 +69,11 @@ colnames(outliers.matrix) = colnames(data)
 
 # Merge 
 SE.genes <- cbind(SE.genes, outliers.matrix)
-write.table(SE.genes, file = "MSE_output_Normalized.txt", sep = "\t", row.names = TRUE)
+write.table(SE.genes, file = "MSE_output.txt", sep = "\t", row.names = TRUE)
 
 # Heatmap
 colors = wes_palette("Zissou1", 21, type = "continuous")
 group = c("PT_1d", "PT_3d", "PT_5d", "TP_1d","TP_3d","TP_5d", "TT/PP_1d", "TT/PP_3d", "TT/PP_5d")
-data_norm = data.frame()
-for (i in 1:nrow(SE.genes.safe)) {
-  norm = (SE.genes.safe[i,1:9] - min(SE.genes.safe[i,1:9])) / (max(SE.genes.safe[i,1:9]) - min(SE.genes.safe[i,1:9]))
-  data_norm = rbind(data_norm, norm)
-}
-map = pheatmap(data_norm, color = colors, cluster_distance_rows = "correlation", show_rownames = FALSE, 
-               angle_col = 90, labels_col = group)
-map
-ggsave('heatmap_MSE_TomPep.png', plot = map, width = 20, height = 15, units = "cm", limitsize = FALSE, dpi = 600)
-
-
-#Other heatmap with prior hierarchical clustering
-clusters = hclust(dist(data_norm), method = "complete")
-clusters_split = cutreeDynamic(clusters, distM = as.matrix(dist(data_norm)), method = "hybrid", deepSplit = 1)
-clusters_split = rbind.data.frame(as.matrix(clusters_split))
-rownames(clusters_split) = rownames(data_norm)
-clusters_split = rownames_to_column(clusters_split, var = "Var1")
-
-df_molten = data_norm[clusters$order,]
-df_molten = melt(as.matrix(df_molten))
-df_molten = join(df_molten, clusters_split, by = "Var1")
-
 colors2 = wes_palette("Royal1")
 
 # Create theme
@@ -110,17 +83,8 @@ newtheme <- theme(axis.ticks = element_blank(), axis.text.x = element_text(size 
                   plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
                   strip.text.x = element_text(size = 6, face = "bold"),
                   strip.text.y = element_text(size = 10, face = "bold"))
-# Create plot
-p <- ggplot(df_molten, aes(x = Var2, y = Var1, fill = value)) + geom_tile()
-p <- p + newtheme + labs(x = "Time points", y = "", fill = "Scaled FPKM")
-p <- p + scale_fill_gradientn(colors = colors, na.value = colors2[1]) + ggtitle("MSE selected genes")
-p <- p + scale_x_discrete(labels = c(unique(group)))
-#p = p + facet_wrap(~ V1, scales = "free")
-p
-ggsave('heatmap_MSE_TomPep_b.png', plot = p, width = 30, height = 20, units = "cm", limitsize = FALSE, dpi = 600)
 
 #Heatmap grouped according to MSE (6 groups)
-data = read.xlsx("MSE_Output_selection_norm.xlsx", colNames = TRUE)
 data_norm = data.frame()
 for (i in 1:nrow(data)) {
   norm = (data[i,2:10] - min(data[i,2:10])) / (max(data[i,2:10]) - min(data[i,2:10]))
