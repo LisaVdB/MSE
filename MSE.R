@@ -1,4 +1,3 @@
-library(RColorBrewer)
 library(gplots)
 library(gdata)
 library("openxlsx")
@@ -8,9 +7,8 @@ library(ggplot2)
 library(scales)
 library("wesanderson")
 library(tidyverse)
-library(pheatmap)
 
-#very lowly expressed genes need to be removed
+#very lowly expressed genes need to be removed; if more than half of the datapoints of a gene are zeros the MSE will not run
 data = read.xlsx("FPKM_average.xlsx", colNames = TRUE, rowNames = TRUE)
 head(data)
 
@@ -103,10 +101,6 @@ data_all2 = cbind(data[,1], data[,20], kmeans$cluster, data_norm)
 colnames(data_all2)[c(1,2,3)] = c("GeneID", "Group", "Cluster")
 data_all2 = data_all2[order(data_all$Cluster),]
 
-data_all3 = cbind(data[,1], data[,20], kmeans$cluster, data[,11:19])
-colnames(data_all3)[c(1,2,3)] = c("GeneID", "Group", "Cluster")
-data_all3 = data_all3[order(data_all3$Cluster),]
-
 data_long = gather(data_all2, Sample, Value, -GeneID, -Group, -Cluster)
 p <- ggplot(data_long, aes(x = Sample, y = GeneID, fill = Value)) + geom_tile()
 p <- p + newtheme + labs(x = "", y = "", fill = "Scaled FPKM")
@@ -114,4 +108,4 @@ p <- p + scale_fill_gradientn(colors = colors) + ggtitle("MSE selected genes")
 p <- p + scale_x_discrete(labels = c(unique(group)))
 p = p + facet_wrap(~ Group, scales = "free")
 p
-ggsave('heatmap_MSE_TomPep_c.png', plot = p, width = 30, height = 20, units = "cm", limitsize = FALSE, dpi = 600)
+ggsave('heatmap_MSE_TomPep.png', plot = p, width = 30, height = 20, units = "cm", limitsize = FALSE, dpi = 600)
