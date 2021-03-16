@@ -1,0 +1,2 @@
+cat ITAG3.2_gene_models.gff Pepper_1.55.gene_models.gff3 > combined_gene_models.gff
+cat S_lycopersicum_chromosomes.3.00.fa Pepper_1.55.fasta > combined.fa
